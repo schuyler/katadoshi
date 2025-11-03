@@ -10,9 +10,10 @@ import SwiftUI
 
 /// Manages persistence and CRUD operations for Form models using UserDefaults
 @MainActor
-class FormStore: ObservableObject {
-    /// Published array of forms that triggers UI updates when changed
-    @Published private(set) var forms: [Form] = []
+@Observable
+class FormStore {
+    /// Array of forms that triggers UI updates when changed
+    private(set) var forms: [Form] = []
 
     private let userDefaults: UserDefaults
     private let formsKey = "forms"

@@ -229,7 +229,7 @@ struct FormStoreTests {
         // Save form
         try store.saveForm(form: form)
 
-        // ObservableObject should publish changes (verified by SwiftUI binding in UI tests)
+        // @Observable should trigger UI updates (verified by SwiftUI binding in UI tests)
         // In unit test, we verify the state is correct
         #expect(store.forms.count == 1)
     }
@@ -423,7 +423,7 @@ struct FormStoreTests {
         updatedForm.title = "Updated"
         try store.updateForm(form: updatedForm)
 
-        // ObservableObject should publish changes
+        // @Observable should trigger UI updates
         #expect(store.forms[0].title == "Updated")
     }
 
@@ -537,7 +537,7 @@ struct FormStoreTests {
 
         try store.deleteForm(id: form.id)
 
-        // ObservableObject should publish changes
+        // @Observable should trigger UI updates
         #expect(store.forms.isEmpty)
     }
 
@@ -743,20 +743,12 @@ struct FormStoreTests {
         #expect(store2.forms.isEmpty)
     }
 
-    // MARK: - ObservableObject Publishing Tests
+    // MARK: - Observable Tests
 
-    @Test func formStoreIsObservableObject() {
+    @Test func formStoreFormsArrayIsObservable() {
         let store = makeTestStore()
 
-        // Verify FormStore conforms to ObservableObject
-        // This is a compile-time check, but we verify it can be used
-        _ = store as any ObservableObject
-    }
-
-    @Test func formStoreFormsArrayIsPublished() {
-        let store = makeTestStore()
-
-        // The @Published property wrapper should make forms observable
+        // The @Observable macro makes forms observable
         // In UI tests, this will be verified through SwiftUI binding
         #expect(store.forms is [Form])
     }

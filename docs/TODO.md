@@ -1,8 +1,8 @@
 # Kata Dōshi - Development TODO
 
 **Last Updated:** 2025-11-03
-**Current Phase:** Phase 1 MVP - UI Layer Preparation
-**Status:** PracticeSessionManager complete. iOS 17.0 target established with UI design conventions. Ready to update project config and implement views.
+**Current Phase:** Phase 1 MVP - UI Layer Implementation
+**Status:** iOS 17.0 migration complete. FormStore migrated to @Observable. All 309+ tests passing. Ready to implement views.
 
 ---
 
@@ -10,37 +10,34 @@
 
 ### Immediate Next Steps
 
-1. **[ ] Update Xcode project to iOS 17.0 deployment target**
-   - Update project.pbxproj deployment target
-   - Verify build succeeds with new target
+1. **[✓] Update Xcode project to iOS 17.0 deployment target**
+   - ✓ Updated project.pbxproj deployment target (4 occurrences)
+   - ✓ Verified build succeeds with new target
 
-2. **[ ] Audit codebase for iOS 16 patterns that can be modernized for iOS 17**
-   - Review existing code for iOS 16-specific choices
-   - Identify opportunities to use iOS 17+ APIs/patterns
-   - Document findings and plan updates
+2. **[✓] Migrate to @Observable pattern (iOS 17+)**
+   - ✓ Migrated FormStore from ObservableObject to @Observable
+   - ✓ Updated FormStore tests (removed obsolete test, updated comments)
+   - ✓ All 309+ tests passing
+   - Note: Services and PracticeSessionManager use callbacks by design (no migration needed per Groucho's recommendation)
 
-3. **[ ] Migrate to @Observable pattern (iOS 17+)**
-   - Update services/managers to use @Observable where appropriate
-   - Replace @StateObject/@ObservableObject patterns
-
-4. **[ ] Implement FormsListView**
+3. **[ ] Implement FormsListView**
    - Location: `katadoshi/Views/FormsListView.swift`
    - PRD Reference: Sections 7.1, 9.1, 9.4
    - Design: `.insetGrouped` list, `NavigationStack`, SF Symbols
 
-5. **[ ] Implement FormEditorView**
+4. **[ ] Implement FormEditorView**
    - Location: `katadoshi/Views/FormEditorView.swift`
    - PRD Reference: Sections 7.2, 9.2, 9.4
    - Design: `.bordered` + `.destructive` delete button, validation alerts
 
-6. **[ ] Implement PracticeView**
+5. **[ ] Implement PracticeView**
    - Location: `katadoshi/Views/PracticeView.swift`
    - PRD Reference: Sections 7.3, 9.3, 9.4
    - Design: State-dependent UI, `.borderedProminent` buttons, system colors
 
 ### Future Work
 
-4. **[ ] Integration tests for SpeechRecognitionService authorization**
+1. **[ ] Integration tests for SpeechRecognitionService authorization**
    - Manual test checklist created: `docs/Integration-Test-SpeechRecognition.md`
    - Test harness implemented: `katadoshi/Debug/SpeechTestHarnessView.swift`
    - Run 8 test cases on physical device with various permission states
@@ -101,6 +98,24 @@
   - Error enum with 4 cases: emptyForm, invalidMoveIndex, serviceUnavailable, permissionDenied
   - Conforms to Error, Equatable, CustomStringConvertible
   - Meaningful error descriptions for user feedback
+
+#### iOS 17 Migration
+- **[✓] Deployment Target Update**
+  - Updated `katadoshi.xcodeproj/project.pbxproj` to iOS 17.0 (4 occurrences)
+  - Verified build succeeds with new target
+
+- **[✓] FormStore @Observable Migration**
+  - Migrated FormStore from `ObservableObject` to `@Observable` macro
+  - Removed `@Published` wrapper (properties now implicitly observable)
+  - Updated FormStore tests (removed obsolete `formStoreIsObservableObject` test)
+  - Updated test comments to reference @Observable instead of ObservableObject
+  - All 309+ tests passing (84 FormStore tests)
+
+- **[✓] Conservative Approach (per Groucho's recommendation)**
+  - Services and PracticeSessionManager use callbacks by design (no migration needed)
+  - Protocol-based architecture preserved (testability maintained)
+  - Minimal blast radius (only FormStore changed)
+  - Zero test failures
 
 #### Testing Infrastructure
 - **[✓] Integration Test Checklist** (`docs/Integration-Test-SpeechRecognition.md`)
