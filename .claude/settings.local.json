@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xcodebuild test:*)",
+      "Bash(xcodebuild:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nImplement Phase 1 MVP: Data and service layers with comprehensive tests\n\nData Layer:\n- Form model with Codable, Identifiable, Equatable (42 tests)\n- FormStore with UserDefaults persistence, CRUD operations, validation, and move parsing (85 tests)\n- FormStoreError enum with custom descriptions\n\nService Layer:\n- TextToSpeechService with AVSpeechSynthesizer integration (69 tests)\n- Protocol-based design for testability and dependency injection\n- Completion callbacks for state machine coordination\n\nConfiguration:\n- Set iOS deployment target to 16.0 per PRD requirements\n- Added comprehensive PRD documentation\n\nTest Coverage:\n- 196 total tests passing (100% coverage on business logic)\n- Uses Swift Testing framework with @MainActor isolation\n- TDD workflow: Groucho (plan) → Zeppo (tests) → Chico (review) → Implementation\n\nAll tests passing. Ready for Phase 1 UI components.\nEOF\n)\")",
+      "Bash(git commit -m \"$(cat <<''EOF''\nRefactor: Split tests into separate files for better organization\n\nRefactored the monolithic 2249-line katadoshiTests.swift into three focused test files to improve maintainability and keep context windows manageable for AI-assisted development:\n\n- FormModelTests.swift: 42 tests for Form model (Identifiable, Codable, Equatable)\n- FormStoreTests.swift: 85 tests for FormStore persistence and business logic\n- TextToSpeechServiceTests.swift: 69 tests for TextToSpeechService with MockSpeechSynthesizer\n\nBenefits:\n- Smaller, more focused test files (500-1000 lines each vs 2200+ lines)\n- Easier to navigate and understand test coverage for each component\n- Reduces context window size for Zeppo (test writer) and Chico (test reviewer)\n- Maintains 100% test coverage with all 196 tests passing\n\nNo functional changes - purely organizational refactoring.\nEOF\n)\")",
+      "Bash(xcrun xcresulttool:*)",
+      "Bash(python3:*)",
+      "Skill(claude-code)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

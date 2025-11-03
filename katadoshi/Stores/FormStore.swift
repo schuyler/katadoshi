@@ -165,4 +165,19 @@ class FormStore {
         forms.removeAll(where: { $0.id == id })
         try persist()
     }
+
+    #if DEBUG
+    /// Test-only method to directly insert forms without validation (for UI testing)
+    /// - Parameter form: The form to insert
+    /// - Note: This bypasses validation and is only available in DEBUG builds
+    func testOnlyInsertForm(form: Form) {
+        forms.append(form)
+    }
+
+    /// Test-only method to clear all forms without persistence (for UI testing)
+    /// - Note: This is only available in DEBUG builds
+    func testOnlyClearForms() {
+        forms.removeAll()
+    }
+    #endif
 }
