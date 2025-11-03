@@ -24,8 +24,8 @@ protocol TextToSpeechServiceProtocol {
     var isSpeaking: Bool { get }
 
     /// Callback invoked when speech finishes or is cancelled
-    /// - Parameter success: true if speech completed normally, false if cancelled
-    var didFinishSpeaking: ((Bool) -> Void)? { get set }
+    /// - Parameter text: The text that was spoken
+    var didFinishSpeaking: ((String) -> Void)? { get set }
 }
 
 /// Text-to-speech service using AVSpeechSynthesizer
@@ -37,8 +37,9 @@ protocol TextToSpeechServiceProtocol {
 class TextToSpeechService: NSObject, TextToSpeechServiceProtocol {
     private let synthesizer: AVSpeechSynthesizer
 
-    /// Callback invoked when speech finishes (true) or is cancelled (false)
-    var didFinishSpeaking: ((Bool) -> Void)?
+    /// Callback invoked when speech finishes or is cancelled
+    /// - Parameter text: The text that was spoken
+    var didFinishSpeaking: ((String) -> Void)?
 
     /// Indicates whether the synthesizer is currently speaking
     var isSpeaking: Bool {
@@ -81,11 +82,11 @@ class TextToSpeechService: NSObject, TextToSpeechServiceProtocol {
 extension TextToSpeechService: AVSpeechSynthesizerDelegate {
     /// Called when the synthesizer finishes speaking an utterance
     func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
-        didFinishSpeaking?(true)
+        didFinishSpeaking?(utterance.speechString)
     }
 
     /// Called when the synthesizer cancels speaking an utterance
     func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didCancel utterance: AVSpeechUtterance) {
-        didFinishSpeaking?(false)
+        didFinishSpeaking?(utterance.speechString)
     }
 }
