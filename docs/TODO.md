@@ -2,7 +2,7 @@
 
 **Last Updated:** 2025-11-03
 **Current Phase:** Phase 1 MVP - UI Layer Implementation
-**Status:** iOS 17.0 migration complete. FormStore migrated to @Observable. All 309+ tests passing. Ready to implement views.
+**Status:** FormsListView and FormEditorView complete. Ready to implement PracticeView.
 
 ---
 
@@ -20,15 +20,19 @@
    - ✓ All 309+ tests passing
    - Note: Services and PracticeSessionManager use callbacks by design (no migration needed per Groucho's recommendation)
 
-3. **[ ] Implement FormsListView**
-   - Location: `katadoshi/Views/FormsListView.swift`
-   - PRD Reference: Sections 7.1, 9.1, 9.4
-   - Design: `.insetGrouped` list, `NavigationStack`, SF Symbols
+3. **[✓] Implement FormsListView**
+   - ✓ Location: `katadoshi/Views/FormsListView.swift`
+   - ✓ PRD Reference: Sections 7.1, 9.1, 9.4
+   - ✓ Design: `.insetGrouped` list, `NavigationStack`, SF Symbols
+   - ✓ 38 UI tests + comprehensive unit tests
+   - Note: UI test data injection helper needs implementation (minor)
 
-4. **[ ] Implement FormEditorView**
-   - Location: `katadoshi/Views/FormEditorView.swift`
-   - PRD Reference: Sections 7.2, 9.2, 9.4
-   - Design: `.bordered` + `.destructive` delete button, validation alerts
+4. **[✓] Implement FormEditorView**
+   - ✓ Location: `katadoshi/Views/FormEditorView.swift`
+   - ✓ PRD Reference: Sections 7.2, 9.2, 9.4
+   - ✓ Design: `.bordered` + `.destructive` delete button, validation alerts
+   - ✓ Features: Create/edit modes, TextEditor placeholder, swipe-to-edit navigation
+   - ✓ 1 unit test + 43 UI tests (comprehensive coverage)
 
 5. **[ ] Implement PracticeView**
    - Location: `katadoshi/Views/PracticeView.swift`
@@ -98,6 +102,32 @@
   - Error enum with 4 cases: emptyForm, invalidMoveIndex, serviceUnavailable, permissionDenied
   - Conforms to Error, Equatable, CustomStringConvertible
   - Meaningful error descriptions for user feedback
+
+#### UI Layer
+- **[✓] FormsListView** (`katadoshi/Views/FormsListView.swift`)
+  - NavigationStack with `.insetGrouped` list style
+  - @Observable FormStore integration
+  - Form rows display title (18pt bold) and last practiced date (14pt gray)
+  - Swipe-to-delete and swipe-to-edit functionality
+  - Context menu for Edit action (secondary access)
+  - Empty state with "No Forms Yet" message
+  - Navigation to FormEditorView (modal sheet) and PracticeView (push)
+  - 38 UI tests passing + comprehensive unit tests
+  - Test files: `FormsListViewTests.swift`, `FormsListViewUITests.swift`
+
+- **[✓] FormEditorView** (`katadoshi/Views/FormEditorView.swift`)
+  - Two modes: `.create` and `.edit(Form)`
+  - @Environment(FormStore.self) and @Environment(\.dismiss) integration
+  - Title TextField with "Form Name" placeholder
+  - Moves TextEditor with custom placeholder overlay ("Enter moves, one per line")
+  - Monospace font for moves editor (120pt min height)
+  - Save button (.borderedProminent, disabled when inputs empty)
+  - Cancel button (.plain navigation bar style)
+  - Delete button (.bordered .destructive, edit mode only, confirmation alert)
+  - Error handling via alert with FormStoreError descriptions
+  - Accessibility labels on all interactive elements
+  - 1 unit test + 43 UI tests
+  - Test files: `FormEditorViewTests.swift`, `FormEditorViewUITests.swift`
 
 #### iOS 17 Migration
 - **[✓] Deployment Target Update**

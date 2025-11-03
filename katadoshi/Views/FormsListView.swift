@@ -13,6 +13,7 @@ import SwiftUI
 struct FormsListView: View {
     @Environment(FormStore.self) private var formStore
     @State private var showingNewFormEditor = false
+    @State private var formToEdit: Form?
 
     var body: some View {
         NavigationStack {
@@ -20,7 +21,7 @@ struct FormsListView: View {
                 if formStore.forms.isEmpty {
                     EmptyStateView()
                 } else {
-                    FormsList(formStore: formStore)
+                    FormsList(formStore: formStore, formToEdit: $formToEdit)
                 }
             }
             .navigationTitle("Kata Dōshi")
@@ -37,6 +38,13 @@ struct FormsListView: View {
             .sheet(isPresented: $showingNewFormEditor) {
                 NavigationStack {
                     FormEditorView(mode: .create)
+                        .environment(formStore)
+                }
+            }
+            .sheet(item: $formToEdit) { form in
+                NavigationStack {
+                    FormEditorView(mode: .edit(form))
+                        .environment(formStore)
                 }
             }
         }
@@ -46,6 +54,7 @@ struct FormsListView: View {
 /// Separate list component for better organization
 private struct FormsList: View {
     let formStore: FormStore
+    @Binding var formToEdit: Form?
 
     var body: some View {
         List {
@@ -54,6 +63,21 @@ private struct FormsList: View {
                     PracticeView(form: form)
                 } label: {
                     FormRowView(form: form)
+                }
+                .swipeActions(edge: .leading) {
+                    Button {
+                        formToEdit = form
+                    } label: {
+                        Label("Edit", systemImage: "pencil")
+                    }
+                    .tint(.blue)
+                }
+                .contextMenu {
+                    Button {
+                        formToEdit = form
+                    } label: {
+                        Label("Edit", systemImage: "pencil")
+                    }
                 }
             }
             .onDelete(perform: deleteForm)
