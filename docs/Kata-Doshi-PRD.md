@@ -1,7 +1,7 @@
 # Kata Dōshi - Product Requirements Document
 
-**Version:** 1.0  
-**Date:** November 1, 2025  
+**Version:** 1.1
+**Date:** November 3, 2025
 **Status:** MVP Specification
 
 ---
@@ -446,6 +446,72 @@ State machine controlling practice flow with the following states:
 - Stop button: Red (#FF3B30)
 - Start button: Blue (#007AFF)
 
+### 9.4 UI Design System & Conventions
+
+**Note:** These conventions represent initial design decisions for MVP consistency. All choices are subject to refinement based on implementation experience and user feedback.
+
+#### Color System
+- **Primary Approach:** Use iOS system colors (`.red`, `.blue`, `.green`, etc.) for semantic consistency
+- **Custom Colors:** Only where PRD explicitly specifies hex values (#FF3B30, #007AFF)
+- **Semantic State Colors:**
+  - Listening: `.green`
+  - Speaking: `.blue`
+  - Paused: `.orange`
+  - Destructive actions: `.red`
+
+#### Typography
+- **Dynamic Type:** Use Dynamic Type sizes (`.title`, `.body`, `.caption`, etc.) for accessibility support where appropriate
+- **Fixed Sizes:** Use PRD-specified point sizes (16pt, 18pt, 24pt) for practice view where readability from distance is critical
+- **Type Hierarchy:**
+  - Navigation titles: System default (`.largeTitle` or `.title`)
+  - Form titles: 18pt bold (as specified in PRD)
+  - Practice instructions: 24pt bold (as specified in PRD)
+  - Body text: System `.body` style
+  - Secondary text: 14pt or `.caption` style
+
+#### Spacing & Layout
+- **Spacing Scale:** Use multiples of 4/8/16/24/32pt for consistent rhythm
+- **Safe Areas:** Respect system safe areas for all views
+- **Padding:** Standard 16pt horizontal padding for content, 8pt for compact elements
+
+#### Button Styles
+- **Primary Actions:** `.borderedProminent` style (e.g., Start/Resume buttons)
+- **Secondary Actions:** `.bordered` style
+- **Destructive Actions:** `.bordered` with `.destructive` role (outlined red button)
+  - Example: Delete button in FormEditorView
+- **Navigation Bar Buttons:** Default `.plain` style (system standard)
+- **Text-Only Actions:** `.plain` style for tertiary actions
+
+#### List Presentation
+- **FormsListView Style:** `.insetGrouped` for modern, polished appearance
+- **Row Content:** Follow system standards for list rows (title, subtitle, chevron, swipe actions)
+- **Empty States:** Centered message with subtitle guidance
+
+#### Icons & Symbols
+- **Icon System:** SF Symbols for all icons (system consistency)
+- **Chevrons:** System-provided disclosure indicators
+- **Navigation Actions:** SF Symbol icons (e.g., "plus" for add button)
+
+#### State Management Pattern
+- **Observability:** Use `@Observable` macro for state objects (iOS 17+)
+- **View State:** `@State` for local view state
+- **Shared State:** `@Environment` for dependency injection where appropriate
+
+#### Navigation Pattern
+- **Navigation Container:** `NavigationStack` with path-based navigation (iOS 16+)
+- **Dismissal:** `@Environment(\.dismiss)` for programmatic view dismissal
+- **Deep Linking:** Consider navigation path for future deep linking support
+
+#### Error Presentation
+- **Validation Errors:** `.alert(error:)` modifier with error binding
+- **Permission Errors:** Alert with Settings link
+- **Inline Errors:** Below form fields where contextually appropriate
+
+#### Accessibility
+- **Dynamic Type:** Support system text sizing throughout
+- **VoiceOver:** Semantic labels for all interactive elements
+- **Contrast:** Follow system color adaptations for dark mode and high contrast
+
 ---
 
 ## 10. Non-Functional Requirements
@@ -481,12 +547,13 @@ State machine controlling practice flow with the following states:
 ## 11. Technical Constraints
 
 ### 11.1 iOS Requirements
-- **Minimum iOS Version:** iOS 16.0
+- **Minimum iOS Version:** iOS 17.0
 - **Devices:** iPhone only for MVP (iPad support future)
 - **Frameworks Required:**
   - Speech (voice recognition)
   - AVFoundation (text-to-speech)
   - SwiftUI (user interface)
+  - Observation (for @Observable macro)
 
 ### 11.2 Permissions Required
 - Microphone access (for voice commands)
@@ -628,6 +695,7 @@ State machine controlling practice flow with the following states:
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
 | 1.0 | 2025-11-01 | Product Team | Initial MVP specification |
+| 1.1 | 2025-11-03 | Development Team | Updated iOS requirement to 17.0; Added UI Design System & Conventions (Section 9.4) |
 
 ---
 

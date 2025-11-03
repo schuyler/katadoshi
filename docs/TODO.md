@@ -1,8 +1,8 @@
 # Kata Dōshi - Development TODO
 
 **Last Updated:** 2025-11-03
-**Current Phase:** Phase 1 MVP - UI Layer Implementation
-**Status:** PracticeSessionManager complete, ready for UI views (FormsListView, FormEditorView, PracticeView)
+**Current Phase:** Phase 1 MVP - UI Layer Preparation
+**Status:** PracticeSessionManager complete. iOS 17.0 target established with UI design conventions. Ready to update project config and implement views.
 
 ---
 
@@ -10,36 +10,33 @@
 
 ### Immediate Next Steps
 
-1. **[ ] Implement FormsListView with navigation and list display**
+1. **[ ] Update Xcode project to iOS 17.0 deployment target**
+   - Update project.pbxproj deployment target
+   - Verify build succeeds with new target
+
+2. **[ ] Audit codebase for iOS 16 patterns that can be modernized for iOS 17**
+   - Review existing code for iOS 16-specific choices
+   - Identify opportunities to use iOS 17+ APIs/patterns
+   - Document findings and plan updates
+
+3. **[ ] Migrate to @Observable pattern (iOS 17+)**
+   - Update services/managers to use @Observable where appropriate
+   - Replace @StateObject/@ObservableObject patterns
+
+4. **[ ] Implement FormsListView**
    - Location: `katadoshi/Views/FormsListView.swift`
-   - PRD Reference: Section 7.1
-   - Requirements:
-     - Display saved forms with title and move count
-     - Navigate to FormEditorView (create/edit)
-     - Navigate to PracticeView (practice selected form)
-     - Swipe-to-delete functionality
-     - Pull-to-refresh (optional for MVP)
+   - PRD Reference: Sections 7.1, 9.1, 9.4
+   - Design: `.insetGrouped` list, `NavigationStack`, SF Symbols
 
-2. **[ ] Implement FormEditorView with validation and save/cancel**
+5. **[ ] Implement FormEditorView**
    - Location: `katadoshi/Views/FormEditorView.swift`
-   - PRD Reference: Section 7.2
-   - Requirements:
-     - Title text field (required)
-     - Multi-line moves text area
-     - Save button (validates title and moves)
-     - Cancel button (discards changes)
-     - Validation per FormStore rules (PRD Section 4.2)
+   - PRD Reference: Sections 7.2, 9.2, 9.4
+   - Design: `.bordered` + `.destructive` delete button, validation alerts
 
-3. **[ ] Implement PracticeView with state-dependent UI**
+6. **[ ] Implement PracticeView**
    - Location: `katadoshi/Views/PracticeView.swift`
-   - PRD Reference: Section 7.3
-   - Requirements:
-     - State-dependent UI (Ready/Speaking/Listening/Paused/Completed)
-     - Current move display (large, centered)
-     - Progress indicator (move X of Y)
-     - Manual stop button (always visible)
-     - Visual feedback for voice command recognition
-     - 2-minute timeout message (PRD Section 6.2)
+   - PRD Reference: Sections 7.3, 9.3, 9.4
+   - Design: State-dependent UI, `.borderedProminent` buttons, system colors
 
 ### Future Work
 
