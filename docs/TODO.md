@@ -1,8 +1,8 @@
 # Kata Dōshi - Development TODO
 
-**Last Updated:** 2025-11-04 (Session: Screen Idle Timer Fix)
-**Current Phase:** Phase 1 MVP - Testing Strategy Finalized
-**Status:** All UI tests removed. Test strategy: 350+ unit tests + comprehensive manual QA.
+**Last Updated:** 2025-11-04 (Session: TODO Cleanup)
+**Current Phase:** Phase 1 MVP - Ready for Physical Device Testing
+**Status:** All implementation complete. Screen management fixed. UI tests removed. Ready for integration testing on physical device.
 
 **Quick Navigation:**
 - **Architecture & Design:** See `docs/ARCHITECTURE.md`
@@ -29,38 +29,25 @@
      - Idle timer re-enables when user exits practice view
      - Pause state keeps screen on (allows hands-free resume)
      - Restart from completed re-disables idle timer
-   - **Status:** Complete (commit pending)
+   - **Status:** Complete (commit aa876c7)
 
 2. **[✓] UI Test Strategy - Complete Removal** ✅ COMPLETE
    - **Decision:** Remove ALL UI tests, rely entirely on manual QA
    - **Rationale:** UI tests flaky/slow; voice-controlled app requires manual testing; 350+ unit tests provide 100% business logic coverage
    - **Outcome:** All 120 UI tests deleted (2,269 lines), enhanced manual QA checklist
-   - **Status:** Complete (commit 5aafc29)
+   - **Status:** Complete (commit a95434e)
 
-   **Key Improvements Made:**
-   - ✅ Fixed critical FormStore lifecycle bug (Zeppo): FormStore was recreated on every render, causing deletions to appear ineffective
-   - ✅ Added Delete button to swipe actions in FormsListView
-   - ✅ Implemented programmatic test data injection (saved ~6 minutes)
-   - ✅ FormsListView: 26/29 tests passing (90%)
+   **Delivered:**
+   - Comprehensive manual QA checklist (`docs/MANUAL-QA-CHECKLIST.md`)
+   - All UI test files and infrastructure removed
+   - Relying on 350+ unit tests + manual testing for quality assurance
 
-   **New Documentation:**
-   - `docs/MANUAL-QA-CHECKLIST.md` - Comprehensive 5-10 minute manual testing guide
-   - `docs/UI-SMOKE-TESTS.md` - Documents which 5 smoke tests to keep for CI/CD
-
-   **Files Modified:**
-   - `katadoshi/katadoshiApp.swift` - Fixed FormStore lifecycle, added TestEnvironmentView
-   - `katadoshi/Views/FormsListView.swift` - Added delete button, fixed @Environment usage
-
-   **Next Actions:**
-   - Run manual QA checklist before releases (docs/MANUAL-QA-CHECKLIST.md)
-   - Continue with Phase 1 completion (speech recognition integration testing)
-
-3. **[ ] Integration tests for SpeechRecognitionService authorization**
-   - Manual test checklist: `docs/Integration-Test-SpeechRecognition.md`
-   - Test harness: `katadoshi/Debug/SpeechTestHarnessView.swift`
-   - Run 8 test cases on physical device with various permission states
-   - Document results in test execution log
-   - **Status:** Test infrastructure ready, execution pending
+3. **[ ] Physical Device Integration Testing**
+   - **Unified workflow:** `docs/INTEGRATION-TEST-WORKFLOW.md` (30-45 minutes)
+   - Combines speech recognition authorization tests + full manual QA
+   - Test harness available: `katadoshi/Debug/SpeechTestHarnessView.swift`
+   - **Requirements:** Physical iOS device (speech + idle timer tests)
+   - **Status:** Test workflow ready, execution pending
 
 ---
 
@@ -71,15 +58,17 @@
 - Service Layer: TextToSpeechService, SpeechRecognitionService
 - Manager Layer: PracticeSessionManager, PracticeSessionManagerError
 - UI Layer: FormsListView, FormEditorView, PracticeView, PracticeViewModel
-- Screen Management: Idle timer disable/enable in PracticeView
+- Screen Management: Idle timer disable/enable in PracticeView (commit aa876c7)
 - iOS 17.0 migration with @Observable pattern
-- Unit test infrastructure (350+ tests passing)
-- **Programmatic test data injection** (infrastructure complete, partial test migration)
+- Unit test infrastructure (350+ tests passing, 100% business logic coverage)
+- Manual QA checklist and testing strategy (commit a95434e)
 
-### Remaining
-- Integration testing for speech recognition (manual checklist ready)
-- Integration testing for screen management (idle timer disable/enable)
-- Optional: Trim UI test suite to 5 smoke tests only
+### Remaining (Physical Device Required)
+- Complete integration testing workflow: `docs/INTEGRATION-TEST-WORKFLOW.md` (30-45 min)
+  - Speech recognition authorization tests (8 test cases)
+  - Screen management idle timer tests (9 scenarios)
+  - Full manual QA checklist (12 test sections)
+  - Final release sign-off
 
 
 ## Future Work (Post-MVP)
@@ -114,16 +103,7 @@
 ## Known Issues & Technical Debt
 
 ### Current Gaps
-1. **UI tests partially fixed** - FormsListView: 66% passing, FormEditor/Practice: unknown
-2. **Integration tests not executed** - Requires physical device testing (speech recognition, screen management)
-3. **Incomplete test migration** - FormEditorViewUITests only ~20% migrated to programmatic injection
-
-### Technical Debt from UI Test Work
-1. Some FormEditorViewUITests still use slow UI-driven form creation via `injectTestForm()`
-2. Test data constants not extracted (form titles hardcoded in multiple places)
-3. Duplicate helper code between test files (could be extracted to base class)
-4. Missing edge case coverage in test data (forms with exactly 200-char moves, etc.)
-5. Some tests may have incorrect expectations about sheet presentation vs navigation
+- Integration tests not executed (requires physical device for speech recognition and screen management)
 
 ### Future Considerations
 1. Should there be a maximum number of moves per form?
@@ -141,16 +121,9 @@
 
 ### Test Coverage Summary
 - **Unit Tests:** 350+ tests, all passing
-- **UI Tests - FormsListView:** 19/29 passing (66%)
-- **UI Tests - FormEditor:** Unknown (partially migrated)
-- **UI Tests - PracticeView:** Unknown (not yet tested)
-- **Disabled Tests:** 13 tests (SpeechRecognitionService authorization - require integration testing)
 - **Coverage:** 100% on business logic (data, service, manager layers)
-
-### Test Performance
-- **Before optimization:** ~11 minutes for all UI tests
-- **Current (partial):** ~2 minutes for FormsListView suite
-- **Target:** ~2-3 minutes for all UI tests when complete
+- **UI Tests:** Removed (replaced with manual QA checklist)
+- **Disabled Tests:** 13 tests (SpeechRecognitionService authorization - require physical device integration testing)
 
 ### Key PRD Changes (v1.2)
 - Added hands-free operation requirement (Section 4.1.2)
