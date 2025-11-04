@@ -1,6 +1,6 @@
 # Kata Dōshi - Development TODO
 
-**Last Updated:** 2025-11-04 (Session: Complete UI Test Removal)
+**Last Updated:** 2025-11-04 (Session: Screen Idle Timer Fix)
 **Current Phase:** Phase 1 MVP - Testing Strategy Finalized
 **Status:** All UI tests removed. Test strategy: 350+ unit tests + comprehensive manual QA.
 
@@ -16,7 +16,22 @@
 
 ### Immediate Next Steps
 
-1. **[✓] UI Test Strategy - Complete Removal** ✅ COMPLETE
+1. **[✓] Screen Idle Timer Fix** ✅ COMPLETE
+   - **Issue:** Idle timer disabled on every speaking state transition instead of once at session start
+   - **Fix:** Added state tracking (`hasDisabledIdleTimer`) to disable timer once when session starts
+   - **Implementation:** Modified PracticeView.swift to detect session start transitions (Ready/Paused/Completed → Speaking)
+   - **PRD Alignment:** Now correctly implements PRD Section 5.4 screen management requirements
+   - **Testing:** Added manual QA test scenarios in `docs/MANUAL-QA-CHECKLIST.md` (requires physical device)
+   - **Review:** Approved by Chico with no critical/important issues
+   - **Behavior Changes:**
+     - Screen stays on from session start until completion or exit
+     - Idle timer re-enables when form completes (battery conservation)
+     - Idle timer re-enables when user exits practice view
+     - Pause state keeps screen on (allows hands-free resume)
+     - Restart from completed re-disables idle timer
+   - **Status:** Complete (commit pending)
+
+2. **[✓] UI Test Strategy - Complete Removal** ✅ COMPLETE
    - **Decision:** Remove ALL UI tests, rely entirely on manual QA
    - **Rationale:** UI tests flaky/slow; voice-controlled app requires manual testing; 350+ unit tests provide 100% business logic coverage
    - **Outcome:** All 120 UI tests deleted (2,269 lines), enhanced manual QA checklist
@@ -40,7 +55,7 @@
    - Run manual QA checklist before releases (docs/MANUAL-QA-CHECKLIST.md)
    - Continue with Phase 1 completion (speech recognition integration testing)
 
-2. **[ ] Integration tests for SpeechRecognitionService authorization**
+3. **[ ] Integration tests for SpeechRecognitionService authorization**
    - Manual test checklist: `docs/Integration-Test-SpeechRecognition.md`
    - Test harness: `katadoshi/Debug/SpeechTestHarnessView.swift`
    - Run 8 test cases on physical device with various permission states

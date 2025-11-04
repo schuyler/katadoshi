@@ -185,6 +185,22 @@
 
 **Expected:** Full voice control works, state machine behaves correctly, move counter always accurate
 
+#### Screen Management (Idle Timer)
+
+**Note:** MUST test on physical device (idle timer doesn't work in simulator)
+
+- [ ] **Session Start:** Create form, start practice → Screen should NOT auto-lock during practice
+- [ ] **Mid-Session:** Let session run for 5+ minutes through multiple moves → Screen stays on
+- [ ] **Pause State:** Say "pause" during practice → Screen should NOT auto-lock while paused
+- [ ] **Resume from Pause:** Say "start" to resume → Screen continues to stay on
+- [ ] **Complete Session:** Practice to end, reach "Form Complete!" → Screen should auto-lock after device timeout (30 sec, 1 min, etc.)
+- [ ] **Restart from Completed:** Say "start" from completed state → Screen should NOT auto-lock again during practice
+- [ ] **Stop Early:** Tap "Stop" button mid-session → Returns to forms list, screen resumes normal auto-lock behavior
+- [ ] **Navigate Away:** During practice, swipe back to forms list → Screen resumes normal auto-lock behavior
+- [ ] **Lock During Practice:** Manually lock phone mid-practice → Session should pause, unlock and resume should work
+
+**Expected:** Screen stays on during active practice (start to completion), auto-locks when session ends or user exits
+
 ---
 
 ### 10. Accessibility (VoiceOver)

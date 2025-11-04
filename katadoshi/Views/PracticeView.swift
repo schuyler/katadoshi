@@ -35,6 +35,7 @@ struct PracticeView: View {
 
     private let form: Form
     @State private var viewModel: PracticeViewModel?
+    @State private var hasDisabledIdleTimer = false
 
     // MARK: - Initialization
 
@@ -67,18 +68,32 @@ struct PracticeView: View {
                 dismiss()
             }
         }
-        .onChange(of: viewModel?.sessionState) { _, newState in
-            // Disable idle timer when session enters speaking state (PRD Section 5.4)
-            // This is idempotent - safe to call on every speaking transition
-            if newState == .speaking {
+        .onChange(of: viewModel?.sessionState) { oldState, newState in
+            // Detect session start: Ready/Paused/Completed → Speaking (PRD Section 5.4)
+            // Disable idle timer once when session starts to keep screen on
+            let isSessionStarting = (oldState == .ready || oldState == .paused || oldState == .completed)
+                                    && newState == .speaking
+
+            if isSessionStarting && !hasDisabledIdleTimer {
                 disableIdleTimer()
+                hasDisabledIdleTimer = true
+            }
+
+            // Re-enable idle timer when session completes (user finished form)
+            // This conserves battery and allows screen to auto-lock
+            if newState == .completed && hasDisabledIdleTimer {
+                enableIdleTimer()
+                hasDisabledIdleTimer = false
             }
         }
         .onDisappear {
             // Clean up session when view disappears
             viewModel?.stopSession()
             // Re-enable idle timer to restore normal screen behavior (PRD Section 5.4)
-            enableIdleTimer()
+            if hasDisabledIdleTimer {
+                enableIdleTimer()
+                hasDisabledIdleTimer = false
+            }
         }
     }
 
@@ -86,16 +101,17 @@ struct PracticeView: View {
 
     /// Disables idle timer to keep screen on during practice (PRD Section 5.4)
     ///
-    /// Called when practice session transitions from ready to speaking state.
+    /// Called once when practice session starts (Ready/Paused/Completed → Speaking).
     /// Prevents screen from auto-locking to maintain speech recognition functionality.
+    /// Tracked via hasDisabledIdleTimer flag to avoid redundant calls.
     private func disableIdleTimer() {
         UIApplication.shared.isIdleTimerDisabled = true
     }
 
     /// Re-enables idle timer to restore normal screen behavior (PRD Section 5.4)
     ///
-    /// Called when view disappears to ensure screen auto-lock returns to normal.
-    /// This is an idempotent operation - safe to call multiple times.
+    /// Called when session completes or view disappears to ensure screen auto-lock
+    /// returns to normal. Tracked via hasDisabledIdleTimer flag for proper state management.
     private func enableIdleTimer() {
         UIApplication.shared.isIdleTimerDisabled = false
     }
