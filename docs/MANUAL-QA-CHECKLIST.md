@@ -13,20 +13,23 @@
 
 ## Critical Path Tests (Required)
 
-### 1. App Launch & Empty State
+### 1. App Launch & Empty State (30 seconds)
 - [ ] App launches without crashing
+- [ ] Navigation bar displays "Kata Dōshi" title prominently
 - [ ] Empty state displays "No Forms Yet" message
 - [ ] Empty state displays "Tap + to create your first form" subtitle
-- [ ] Navigation title shows "Kata Dōshi"
 - [ ] "+" button visible in toolbar
+- [ ] Forms list rows show chevron indicator (test after creating a form)
 
 **Expected:** Clean launch, empty state UI appears correctly
 
 ---
 
-### 2. Form Creation
+### 2. Form Creation (45 seconds)
 - [ ] Tap "+" button → Form editor appears as modal sheet
+- [ ] Verify Save button disabled when editor first opens (grayed out, both fields empty)
 - [ ] Enter form title: "Test Form"
+- [ ] Verify Save button still disabled (moves field empty)
 - [ ] Enter moves (one per line):
   ```
   Front stance
@@ -34,6 +37,7 @@
   Step forward
   Middle punch
   ```
+- [ ] Verify Save button now enabled (blue/prominent style, both fields have content)
 - [ ] Tap "Save" → Returns to list
 - [ ] Form appears in list with title "Test Form"
 - [ ] Form shows "Created [time] ago" under title
@@ -42,45 +46,60 @@
 
 ---
 
-### 3. Form Deletion
+### 3. Form Deletion (45 seconds)
 - [ ] Swipe left on "Test Form"
 - [ ] Delete and Edit buttons appear
 - [ ] Tap "Delete"
+- [ ] Confirmation alert appears with title "Delete this form?"
+- [ ] Alert has two buttons: "Cancel" (left/default) and "Delete" (right/destructive red)
+- [ ] Tap "Cancel" → Alert dismisses, form still in list
+- [ ] Swipe left again, tap "Delete" → Alert appears again
+- [ ] Tap "Delete" to confirm
 - [ ] Form immediately disappears from list
 - [ ] Empty state reappears
 
-**Expected:** Form deleted, empty state restored
+**Expected:** Form deleted with confirmation, empty state restored
 
 ---
 
-### 4. Practice Session - Basic Flow
+### 4. Practice Session - Basic Flow (60 seconds)
 - [ ] Create a new form with 3 moves
 - [ ] Tap form to navigate to Practice View
+- [ ] Verify navigation bar shows form title (not "Kata Dōshi")
 - [ ] Practice View shows:
-  - Form title in navigation bar
   - Move counter "1 of 3"
   - Current move text
   - "Say 'start' or tap Start button"
   - Start button
   - Stop button
 - [ ] Tap "Start" button
+- [ ] "Speaking..." indicator appears
 - [ ] Move 1 is spoken aloud
-- [ ] After speech completes: "Say 'next' or tap Next button" appears
+- [ ] After speech completes: "Listening..." indicator appears
+- [ ] "Say 'next' or tap Next button" prompt appears
+- [ ] Move counter still shows "1 of 3"
+- [ ] Tap "Next" button
+- [ ] Move counter updates to "2 of 3"
+- [ ] "Speaking..." indicator appears again
+- [ ] Move 2 is spoken aloud
 - [ ] Tap "Stop" button → Returns to forms list
 
-**Expected:** Practice session starts, TTS speaks move, can stop session
+**Expected:** Practice session starts, TTS speaks moves, state indicators display correctly, move counter updates
 
 ---
 
-### 5. Navigation & Back Buttons
+### 5. Navigation & Back Buttons (60 seconds)
 - [ ] From forms list, tap a form → Practice View opens
-- [ ] Tap back button → Returns to forms list
-- [ ] From forms list, tap "+" → Form editor opens
-- [ ] Tap "Cancel" → Returns to forms list
-- [ ] Swipe left, tap "Edit" → Form editor opens in edit mode
-- [ ] Tap "Cancel" → Returns to forms list
+- [ ] Tap back button → Returns to forms list (no crash or hang)
+- [ ] From forms list, tap "+" → Form editor opens as modal sheet (not push navigation)
+- [ ] Verify editor appears from bottom of screen (sheet presentation)
+- [ ] Tap "Cancel" → Sheet dismisses, returns to forms list (no form saved)
+- [ ] Swipe left on a form
+- [ ] Verify Edit button appears alongside Delete button
+- [ ] Tap "Edit" → Form editor opens as modal sheet
+- [ ] Tap "Cancel" → Returns to forms list (changes not saved)
 
-**Expected:** All navigation works, no hangs or crashes
+**Expected:** All navigation works, Cancel works from both create and edit modes, no hangs or crashes
 
 ---
 
@@ -88,25 +107,31 @@
 
 ### 6. Form Editing
 - [ ] Create form "Original Title" with 2 moves
-- [ ] Swipe left, tap "Edit"
+- [ ] Swipe left on form row
+- [ ] Verify Edit button appears alongside Delete button
+- [ ] Tap "Edit" → Form editor opens as modal sheet
+- [ ] Form editor opens with title pre-populated to "Original Title"
+- [ ] Moves field pre-populated with existing 2 moves
+- [ ] Save button initially enabled (fields have content)
 - [ ] Change title to "Edited Title"
 - [ ] Add a third move
 - [ ] Tap "Save"
-- [ ] Verify title changed in list
+- [ ] Verify title changed to "Edited Title" in list
 - [ ] Open practice → Verify 3 moves present
 
-**Expected:** Edits persist correctly
+**Expected:** Fields pre-populated correctly, edits persist correctly
 
 ---
 
 ### 7. Multiple Forms
-- [ ] Create 5 different forms
+- [ ] Create 5 different forms with distinct titles
 - [ ] All 5 appear in list
-- [ ] Delete one from middle → Others remain
-- [ ] Forms displayed in creation order
+- [ ] Forms displayed in chronological order (consistent ordering)
 - [ ] Each form shows correct "Created [time]" label
+- [ ] Delete one from middle → Others remain in same order
+- [ ] List remains scrollable if needed
 
-**Expected:** Multiple forms managed correctly
+**Expected:** Multiple forms managed correctly, consistent display order
 
 ---
 
@@ -153,27 +178,36 @@
 
 #### Navigation During Practice
 - [ ] Start practice
-- [ ] Say "back" to go to previous move
-- [ ] Say "repeat" to repeat current move
-- [ ] Move counter updates correctly
+- [ ] Say "next" to advance → Move counter increments
+- [ ] Say "back" to go to previous move → Move counter decrements
+- [ ] Say "repeat" to repeat current move → Move counter stays same
+- [ ] Move counter accurately reflects current position throughout session
 
-**Expected:** Full voice control works, state machine behaves correctly
+**Expected:** Full voice control works, state machine behaves correctly, move counter always accurate
 
 ---
 
 ### 10. Accessibility (VoiceOver)
 
-**Note:** Only test if releasing with accessibility claims
+**Note:** REQUIRED for all releases - Accessibility is a core requirement
 
-- [ ] Enable VoiceOver
+- [ ] Enable VoiceOver (Settings → Accessibility → VoiceOver)
 - [ ] Navigate forms list with swipe gestures
-- [ ] Each form row reads title and date
-- [ ] "+" button has clear label
+- [ ] Each form row reads title and date clearly
+- [ ] "+" button has clear label ("Add Form" or similar)
 - [ ] Delete button labeled correctly
 - [ ] Practice View elements have proper labels
-- [ ] Can complete full workflow with VoiceOver only
+- [ ] Can complete form creation workflow using only VoiceOver:
+  - [ ] Tap "+" button via VoiceOver
+  - [ ] Enter title and moves via VoiceOver
+  - [ ] Save form via VoiceOver
+- [ ] Can start and stop practice session using VoiceOver:
+  - [ ] Navigate to form and open practice view
+  - [ ] Activate Start button
+  - [ ] Activate Stop button
+- [ ] All interactive elements reachable via VoiceOver gestures
 
-**Expected:** App fully usable with VoiceOver
+**Expected:** App fully usable with VoiceOver, core workflows completable
 
 ---
 

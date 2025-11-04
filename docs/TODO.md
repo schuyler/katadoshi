@@ -1,8 +1,8 @@
 # Kata Dōshi - Development TODO
 
-**Last Updated:** 2025-11-03 (Session: UI Test Performance Improvements)
-**Current Phase:** Phase 1 MVP - UI Test Fixes (In Progress)
-**Status:** Programmatic test injection implemented. 19/29 FormsListView tests passing. Additional work needed.
+**Last Updated:** 2025-11-04 (Session: Complete UI Test Removal)
+**Current Phase:** Phase 1 MVP - Testing Strategy Finalized
+**Status:** All UI tests removed. Test strategy: 350+ unit tests + comprehensive manual QA.
 
 **Quick Navigation:**
 - **Architecture & Design:** See `docs/ARCHITECTURE.md`
@@ -16,11 +16,11 @@
 
 ### Immediate Next Steps
 
-1. **[✓] UI Test Strategy Decision** ✅ COMPLETE
-   - **Decision:** Pivot from comprehensive UI automation to smoke tests + manual QA
-   - **Rationale:** 350+ unit tests provide 100% business logic coverage; UI tests slow (4-5 min) and brittle; manual testing faster for small app
-   - **Outcome:** Keep 5 smoke tests (~30 sec), comprehensive manual QA checklist created
-   - **Status:** FormsListView deletion bug fixed, test infrastructure stable, 26/29 tests passing
+1. **[✓] UI Test Strategy - Complete Removal** ✅ COMPLETE
+   - **Decision:** Remove ALL UI tests, rely entirely on manual QA
+   - **Rationale:** UI tests flaky/slow; voice-controlled app requires manual testing; 350+ unit tests provide 100% business logic coverage
+   - **Outcome:** All 120 UI tests deleted (2,269 lines), enhanced manual QA checklist
+   - **Status:** Complete (commit 5aafc29)
 
    **Key Improvements Made:**
    - ✅ Fixed critical FormStore lifecycle bug (Zeppo): FormStore was recreated on every render, causing deletions to appear ineffective
@@ -37,8 +37,7 @@
    - `katadoshi/Views/FormsListView.swift` - Added delete button, fixed @Environment usage
 
    **Next Actions:**
-   - Run manual QA checklist before releases
-   - Optional: Trim UI test suite to just 5 smoke tests for CI/CD
+   - Run manual QA checklist before releases (docs/MANUAL-QA-CHECKLIST.md)
    - Continue with Phase 1 completion (speech recognition integration testing)
 
 2. **[ ] Integration tests for SpeechRecognitionService authorization**
