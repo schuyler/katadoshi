@@ -172,12 +172,16 @@ class FormStore {
     /// - Note: This bypasses validation and is only available in DEBUG builds
     func testOnlyInsertForm(form: Form) {
         forms.append(form)
+        // Persist immediately to ensure data survives app lifecycle events
+        try? persist()
     }
 
-    /// Test-only method to clear all forms without persistence (for UI testing)
+    /// Test-only method to clear all forms (for UI testing)
     /// - Note: This is only available in DEBUG builds
     func testOnlyClearForms() {
         forms.removeAll()
+        // Persist the empty state
+        try? persist()
     }
     #endif
 }

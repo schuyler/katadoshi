@@ -21,7 +21,7 @@ struct FormsListView: View {
                 if formStore.forms.isEmpty {
                     EmptyStateView()
                 } else {
-                    FormsList(formStore: formStore, formToEdit: $formToEdit)
+                    FormsList(formToEdit: $formToEdit)
                 }
             }
             .navigationTitle("Kata Dōshi")
@@ -53,7 +53,7 @@ struct FormsListView: View {
 
 /// Separate list component for better organization
 private struct FormsList: View {
-    let formStore: FormStore
+    @Environment(FormStore.self) private var formStore
     @Binding var formToEdit: Form?
 
     var body: some View {
@@ -64,7 +64,13 @@ private struct FormsList: View {
                 } label: {
                     FormRowView(form: form)
                 }
-                .swipeActions(edge: .leading) {
+                .swipeActions(edge: .trailing) {
+                    Button(role: .destructive) {
+                        try? formStore.deleteForm(id: form.id)
+                    } label: {
+                        Label("Delete", systemImage: "trash")
+                    }
+
                     Button {
                         formToEdit = form
                     } label: {
@@ -73,6 +79,12 @@ private struct FormsList: View {
                     .tint(.blue)
                 }
                 .contextMenu {
+                    Button(role: .destructive) {
+                        try? formStore.deleteForm(id: form.id)
+                    } label: {
+                        Label("Delete", systemImage: "trash")
+                    }
+
                     Button {
                         formToEdit = form
                     } label: {
@@ -80,17 +92,8 @@ private struct FormsList: View {
                     }
                 }
             }
-            .onDelete(perform: deleteForm)
         }
         .listStyle(.insetGrouped)
-    }
-
-    private func deleteForm(at offsets: IndexSet) {
-        offsets.forEach { index in
-            let form = formStore.forms[index]
-            // FormStore.deleteForm is idempotent and won't throw for typical cases
-            try? formStore.deleteForm(id: form.id)
-        }
     }
 }
 
