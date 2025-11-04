@@ -1,6 +1,6 @@
 # Kata Dōshi - Product Requirements Document
 
-**Version:** 1.1
+**Version:** 1.2
 **Date:** November 3, 2025
 **Status:** MVP Specification
 
@@ -72,6 +72,8 @@ A hands-free, voice-controlled app that reads each move aloud and waits for the 
 - Voice command recognition
 - Visual display of current position
 - Manual stop button
+- **Hands-free operation:** User must not be required to touch or interact with phone during kata practice
+- Screen remains on during practice session to maintain speech recognition
 
 #### 4.1.3 Basic Navigation
 - Move forward through form
@@ -194,6 +196,13 @@ State machine controlling practice flow with the following states:
 - repeatCurrent()
 - pause()
 - stop()
+
+**Screen Management:**
+- Disables idle timer (`UIApplication.shared.isIdleTimerDisabled = true`) when practice session starts
+- Keeps screen on (dimmed) to maintain speech recognition functionality
+- Re-enables idle timer when session stops or view disappears
+- Critical: Speech recognition only works when app is in foreground
+- Manual phone lock or app backgrounding will pause the session
 
 ### 5.5 UI Layer (SwiftUI)
 
@@ -367,6 +376,17 @@ State machine controlling practice flow with the following states:
 | TTS/Recognition conflict | Log error, prioritize TTS | System enforces mutual exclusion |
 | Invalid state transition | Log error, ignore command | User can retry command |
 
+### 8.5 Background Interruptions
+| Event | Behavior | Recovery |
+|-------|----------|----------|
+| Manual phone lock | Speech recognition stops, session pauses | User must unlock and explicitly resume (tap Resume or say "start") |
+| App backgrounded (home button/gesture) | Speech recognition stops, session pauses | User returns to app, explicitly resumes from current move |
+| Phone call | Audio session interrupted, session pauses | After call ends, user explicitly resumes |
+| Siri activation | Speech recognition interrupted, session pauses | User explicitly resumes after Siri dismisses |
+| Other audio interruption | Audio session interrupted, session pauses | User explicitly resumes when interruption ends |
+
+**Key principle:** All background interruptions require explicit user action to resume. Session state and position preserved.
+
 ---
 
 ## 9. User Interface Specifications
@@ -525,7 +545,10 @@ State machine controlling practice flow with the following states:
 ### 10.2 Reliability
 - Voice recognition accuracy target: > 95% in quiet environment
 - App must not crash on invalid form data
-- Phone calls and system interruptions stop the practice session (user must restart manually)
+- Phone calls and system interruptions pause the practice session (user must explicitly resume)
+- Practice sessions keep screen on (dimmed) to maintain speech recognition functionality
+- Screen auto-lock disabled during practice, re-enabled when session ends
+- Headphones with microphone strongly recommended for optimal voice recognition from distance
 
 ### 10.3 Usability
 - New users should be able to create and practice a form within 2 minutes
@@ -623,11 +646,83 @@ State machine controlling practice flow with the following states:
 **Duration:** 4-6 weeks
 
 **Deliverables:**
-- Screen-off mode
-- Background audio
+- Screen-off mode with headphone controls
+- Auto-advance mode with Siri speed control
 - Export/import forms
 - iPad support
 - Checkpoint mode
+
+#### 13.3.1 Screen-Off Mode Technical Requirements
+
+**Hardware Requirements:**
+- Headphones or earbuds with media playback controls (play/pause, next track, previous track)
+- Standard Apple EarPods, AirPods, or most Bluetooth headphones with media controls are compatible
+
+**iOS Configuration:**
+- Background audio session (`.playback` category with `.spokenAudio` mode)
+- Background mode capability: "Audio, AirPlay, and Picture in Picture"
+- `MPRemoteCommandCenter` integration for headphone button control
+- `MPNowPlayingInfoCenter` updates for lock screen display
+
+**Headphone Control Mapping:**
+- **Play button** → Start/Resume practice session
+- **Pause button** → Pause practice session
+- **Next track button** → Next move
+- **Previous track button (first press)** → Repeat current move (restart from beginning, like iTunes behavior)
+- **Previous track button (second press within 2-3 seconds)** → Go to previous move
+- **Stop button** (if available) → End practice session
+
+**Interaction Behavior:**
+- Phone can be locked or screen off during practice
+- TTS audio continues playing through headphones
+- User controls practice flow via headphone buttons
+- Lock screen displays form title and current move information
+- No privacy concerns with lock screen display
+
+**Limitations:**
+- Voice commands not available in screen-off mode (iOS restriction)
+- Control limited to headphone buttons and Siri shortcuts
+- "Repeat" command requires specific button gesture (first press of previous)
+
+**Interruption Handling:**
+- Phone calls pause session (user resumes via play button after call)
+- Other audio interruptions pause session
+- Session state preserved across interruptions
+
+#### 13.3.2 Auto-Advance Mode
+
+**Purpose:**
+- Automatically advance to next move after configurable delay
+- Enables continuous practice flow without manual commands
+- Particularly useful for screen-off mode
+
+**Configuration:**
+- User-configurable delay: 1-30 seconds (default: 5 seconds)
+- Toggle to enable/disable auto-advance mode
+- Setting persisted across sessions
+
+**Behavior:**
+- TTS reads current move
+- Waits for configured delay
+- Automatically advances to next move and reads it
+- Continues until form completes or user pauses
+
+**Siri Speed Control:**
+- "Hey Siri, speed up kata" → Decreases delay by 1 second (minimum 1 second)
+- "Hey Siri, slow down kata" → Increases delay by 1 second (maximum 30 seconds)
+- "Hey Siri, set kata speed to [X] seconds" → Sets specific delay
+- Speed changes apply immediately to next auto-advance
+
+**Interaction with Manual Controls:**
+- Headphone buttons work in auto-advance mode (override automatic progression)
+- Next button: Immediately advance (reset auto-advance timer)
+- Previous button: Go to previous move (restart auto-advance timer)
+- Pause button: Stop auto-advance until resumed
+
+**UI Configuration (Screen On):**
+- Toggle: "Auto-advance after each move"
+- Stepper: "Delay: X seconds" (when auto-advance enabled)
+- Visual indicator during practice: "Next move in X seconds" countdown
 
 ### 13.4 Phase 4: Android (Priority: CONDITIONAL)
 **Duration:** 8-12 weeks
@@ -696,6 +791,7 @@ State machine controlling practice flow with the following states:
 |---------|------|--------|---------|
 | 1.0 | 2025-11-01 | Product Team | Initial MVP specification |
 | 1.1 | 2025-11-03 | Development Team | Updated iOS requirement to 17.0; Added UI Design System & Conventions (Section 9.4) |
+| 1.2 | 2025-11-03 | Development Team | Added hands-free operation requirements; Screen management (idle timer disable); Background interruption handling; Expanded Phase 3 with screen-off mode technical specifications, headphone control mappings, and auto-advance mode with Siri speed control |
 
 ---
 
