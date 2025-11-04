@@ -67,10 +67,37 @@ struct PracticeView: View {
                 dismiss()
             }
         }
+        .onChange(of: viewModel?.sessionState) { _, newState in
+            // Disable idle timer when session enters speaking state (PRD Section 5.4)
+            // This is idempotent - safe to call on every speaking transition
+            if newState == .speaking {
+                disableIdleTimer()
+            }
+        }
         .onDisappear {
             // Clean up session when view disappears
             viewModel?.stopSession()
+            // Re-enable idle timer to restore normal screen behavior (PRD Section 5.4)
+            enableIdleTimer()
         }
+    }
+
+    // MARK: - Screen Management
+
+    /// Disables idle timer to keep screen on during practice (PRD Section 5.4)
+    ///
+    /// Called when practice session transitions from ready to speaking state.
+    /// Prevents screen from auto-locking to maintain speech recognition functionality.
+    private func disableIdleTimer() {
+        UIApplication.shared.isIdleTimerDisabled = true
+    }
+
+    /// Re-enables idle timer to restore normal screen behavior (PRD Section 5.4)
+    ///
+    /// Called when view disappears to ensure screen auto-lock returns to normal.
+    /// This is an idempotent operation - safe to call multiple times.
+    private func enableIdleTimer() {
+        UIApplication.shared.isIdleTimerDisabled = false
     }
 
     // MARK: - Private Views
