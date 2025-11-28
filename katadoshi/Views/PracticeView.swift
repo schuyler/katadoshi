@@ -62,6 +62,8 @@ struct PracticeView: View {
                     formStore: formStore
                 )
             }
+            // Request permissions when view appears (before user taps Start)
+            viewModel?.requestPermissions()
         }
         .onChange(of: viewModel?.shouldDismiss ?? false) { _, shouldDismiss in
             if shouldDismiss {

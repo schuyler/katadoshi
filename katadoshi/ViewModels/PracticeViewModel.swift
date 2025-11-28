@@ -5,8 +5,10 @@
 //  Created by Claude Code on 11/3/25.
 //
 
+import AVFoundation
 import Foundation
 import Observation
+import Speech
 
 /// View model that wraps PracticeSessionManager for SwiftUI integration
 ///
@@ -50,6 +52,9 @@ class PracticeViewModel {
 
     /// Whether view should dismiss (triggered by onExit callback)
     private(set) var shouldDismiss: Bool = false
+
+    /// Whether permissions have been requested
+    private(set) var permissionsRequested: Bool = false
 
     // MARK: - Private Properties
 
@@ -183,5 +188,49 @@ class PracticeViewModel {
     /// allowing the user to retry or navigate away.
     func clearError() {
         error = nil
+    }
+
+    // MARK: - Permission Handling
+
+    /// Request microphone and speech recognition permissions
+    ///
+    /// This method should be called when the view appears to ensure
+    /// permission dialogs are shown before the user tries to start.
+    /// Without explicit requests, iOS won't show permission toggles in Settings.
+    func requestPermissions() {
+        guard !permissionsRequested else { return }
+        permissionsRequested = true
+
+        // Request speech recognition permission first
+        SFSpeechRecognizer.requestAuthorization { [weak self] status in
+            Task { @MainActor in
+                guard let self = self else { return }
+
+                switch status {
+                case .authorized:
+                    // Speech recognition authorized, now request microphone
+                    self.requestMicrophonePermission()
+                case .denied, .restricted:
+                    self.error = .permissionDenied
+                case .notDetermined:
+                    // Should not happen after requesting, but handle gracefully
+                    break
+                @unknown default:
+                    break
+                }
+            }
+        }
+    }
+
+    /// Request microphone permission via AVAudioSession
+    private func requestMicrophonePermission() {
+        AVAudioSession.sharedInstance().requestRecordPermission { [weak self] granted in
+            Task { @MainActor in
+                guard let self = self else { return }
+                if !granted {
+                    self.error = .permissionDenied
+                }
+            }
+        }
     }
 }
