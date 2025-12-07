@@ -52,9 +52,20 @@ class TextToSpeechService: NSObject, TextToSpeechServiceProtocol {
         self.synthesizer = synthesizer
         super.init()
         self.synthesizer.delegate = self
-        // Use the app's shared audio session instead of synthesizer's own session
-        // This prevents audio session conflicts with SFSpeechRecognizer during turn-taking
-        // See: WWDC 2020 "Create a seamless speech experience in your apps"
+        // Use the app's shared audio session instead of synthesizer's own session.
+        // This prevents audio session conflicts with SFSpeechRecognizer during turn-taking.
+        //
+        // References:
+        // - WWDC 2020 "Create a seamless speech experience in your apps":
+        //   https://developer.apple.com/videos/play/wwdc2020/10022/
+        //   "You can set [usesApplicationAudioSession] to false to delegate away the
+        //   management of speech audio to the system."
+        //
+        // - Apple Developer Documentation:
+        //   https://developer.apple.com/documentation/avfaudio/avspeechsynthesizer/usesapplicationaudiosession
+        //
+        // - Stack Overflow (alternating TTS and speech recognition):
+        //   https://stackoverflow.com/questions/48722346
         self.synthesizer.usesApplicationAudioSession = true
     }
 
@@ -73,9 +84,18 @@ class TextToSpeechService: NSObject, TextToSpeechServiceProtocol {
     /// Stops speaking gracefully
     /// Uses pause-then-stop pattern to avoid audio session conflicts during turn-taking
     func stop() {
-        // Pause first to allow audio hardware to settle before full stop
+        // Pause first to allow audio hardware to settle before full stop.
         // This prevents abrupt audio session transitions that can interfere
-        // with subsequent speech recognition
+        // with subsequent speech recognition.
+        //
+        // References:
+        // - Stack Overflow (alternating between AVSpeechSynthesis and AVAudioSession):
+        //   https://stackoverflow.com/questions/48722346
+        //   "Pausing the synthesizer before stopping it allows to deactivate the
+        //   audio session without errors."
+        //
+        // - Stack Overflow (AVSpeechSynthesizer doesn't work after recording):
+        //   https://stackoverflow.com/questions/43637714
         if synthesizer.isSpeaking {
             synthesizer.pauseSpeaking(at: .immediate)
         }

@@ -258,9 +258,18 @@ class SpeechRecognitionService: NSObject, SpeechRecognitionServiceProtocol {
         audioEngine.stop()
         audioEngine.inputNode.removeTap(onBus: 0)
 
-        // Reset the audio engine to clear any lingering state
+        // Reset the audio engine to clear any lingering state.
         // This ensures a clean slate for the next startListening() call
-        // and prevents conflicts when transitioning back from TTS
+        // and prevents conflicts when transitioning back from TTS.
+        //
+        // References:
+        // - Stack Overflow (How to correctly set up AVAudioSession with both services):
+        //   https://stackoverflow.com/questions/53147291
+        //   "Always remove the input node tap before installing a new one, even after
+        //   successful completion."
+        //
+        // - Stack Overflow (AVAudioSession issue when using SFSpeechRecognizer after TTS):
+        //   https://stackoverflow.com/questions/43457132
         audioEngine.reset()
 
         // Clean up recognition request

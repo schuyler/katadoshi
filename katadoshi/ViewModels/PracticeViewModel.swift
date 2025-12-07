@@ -245,8 +245,24 @@ class PracticeViewModel {
     private func configureAudioSession() {
         let audioSession = AVAudioSession.sharedInstance()
         do {
+            // Configure audio session for both TTS playback and speech recognition recording.
             // .mixWithOthers allows TTS and speech recognition to transition smoothly
-            // without abrupt audio session interruptions during turn-taking
+            // without abrupt audio session interruptions during turn-taking.
+            //
+            // References:
+            // - Stack Overflow (AVSpeechSynthesizer doesn't work after recording):
+            //   https://stackoverflow.com/questions/43637714
+            //   "For AVSpeechSynthesizer, the audio session has to be set to Playback with
+            //   MixWithOthers options. For SFSpeechRecognizer, it should be set to
+            //   PlayAndRecord with MixWithOthers options."
+            //
+            // - Stack Overflow (AVSpeechSynthesizer does not speak after using SFSpeechRecognizer):
+            //   https://stackoverflow.com/questions/40270738
+            //
+            // - Stack Overflow (How to correctly set up AVAudioSession with both services):
+            //   https://stackoverflow.com/questions/53147291
+            //   "Configure your audio session in viewDidLoad (or initialization), not
+            //   repeatedly during speech recognition."
             try audioSession.setCategory(
                 .playAndRecord,
                 mode: .default,
