@@ -245,7 +245,13 @@ class PracticeViewModel {
     private func configureAudioSession() {
         let audioSession = AVAudioSession.sharedInstance()
         do {
-            try audioSession.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker, .allowBluetooth])
+            // .mixWithOthers allows TTS and speech recognition to transition smoothly
+            // without abrupt audio session interruptions during turn-taking
+            try audioSession.setCategory(
+                .playAndRecord,
+                mode: .default,
+                options: [.defaultToSpeaker, .allowBluetooth, .mixWithOthers]
+            )
             try audioSession.setActive(true)
         } catch {
             // Non-fatal - services may still work

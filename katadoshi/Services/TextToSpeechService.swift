@@ -52,6 +52,10 @@ class TextToSpeechService: NSObject, TextToSpeechServiceProtocol {
         self.synthesizer = synthesizer
         super.init()
         self.synthesizer.delegate = self
+        // Use the app's shared audio session instead of synthesizer's own session
+        // This prevents audio session conflicts with SFSpeechRecognizer during turn-taking
+        // See: WWDC 2020 "Create a seamless speech experience in your apps"
+        self.synthesizer.usesApplicationAudioSession = true
     }
 
     /// Speaks the given text using default voice and speech rate
@@ -66,8 +70,15 @@ class TextToSpeechService: NSObject, TextToSpeechServiceProtocol {
         synthesizer.speak(utterance)
     }
 
-    /// Stops speaking immediately
+    /// Stops speaking gracefully
+    /// Uses pause-then-stop pattern to avoid audio session conflicts during turn-taking
     func stop() {
+        // Pause first to allow audio hardware to settle before full stop
+        // This prevents abrupt audio session transitions that can interfere
+        // with subsequent speech recognition
+        if synthesizer.isSpeaking {
+            synthesizer.pauseSpeaking(at: .immediate)
+        }
         synthesizer.stopSpeaking(at: .immediate)
     }
 

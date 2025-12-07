@@ -258,6 +258,11 @@ class SpeechRecognitionService: NSObject, SpeechRecognitionServiceProtocol {
         audioEngine.stop()
         audioEngine.inputNode.removeTap(onBus: 0)
 
+        // Reset the audio engine to clear any lingering state
+        // This ensures a clean slate for the next startListening() call
+        // and prevents conflicts when transitioning back from TTS
+        audioEngine.reset()
+
         // Clean up recognition request
         recognitionRequest?.endAudio()
         recognitionRequest = nil

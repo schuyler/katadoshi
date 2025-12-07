@@ -28,6 +28,9 @@ struct TextToSpeechServiceTests {
         var lastPauseBoundary: AVSpeechBoundary?
         var mockIsSpeaking = false
 
+        // Track order of pause/stop calls for turn-taking verification
+        var callOrder: [String] = []
+
         // Track all utterances to simulate queueing behavior
         var utteranceQueue: [AVSpeechUtterance] = []
 
@@ -44,6 +47,7 @@ struct TextToSpeechServiceTests {
         override func stopSpeaking(at boundary: AVSpeechBoundary) -> Bool {
             stopCalled = true
             lastStopBoundary = boundary
+            callOrder.append("stop")
             mockIsSpeaking = false
 
             // Real AVSpeechSynthesizer triggers didCancel when stopped
@@ -57,6 +61,7 @@ struct TextToSpeechServiceTests {
         override func pauseSpeaking(at boundary: AVSpeechBoundary) -> Bool {
             pauseCalled = true
             lastPauseBoundary = boundary
+            callOrder.append("pause")
             return true
         }
 
@@ -352,6 +357,53 @@ struct TextToSpeechServiceTests {
         service.speak(text: "Third")
         service.pause()
         #expect(mockSynthesizer.lastPauseBoundary == .immediate)
+    }
+
+    // MARK: - Turn-Taking Coordination Tests
+
+    @Test func stopMethodPausesBeforeStoppingWhenSpeaking() {
+        let mockSynthesizer = MockSpeechSynthesizer()
+        let service = TextToSpeechService(synthesizer: mockSynthesizer)
+
+        // Start speaking first
+        service.speak(text: "Test instruction")
+
+        // Reset call order tracking after speak
+        mockSynthesizer.callOrder = []
+
+        service.stop()
+
+        // Should pause first, then stop (for audio hardware settling)
+        #expect(mockSynthesizer.pauseCalled)
+        #expect(mockSynthesizer.stopCalled)
+        #expect(mockSynthesizer.callOrder == ["pause", "stop"])
+    }
+
+    @Test func stopMethodSkipsPauseWhenNotSpeaking() {
+        let mockSynthesizer = MockSpeechSynthesizer()
+        let service = TextToSpeechService(synthesizer: mockSynthesizer)
+
+        // Don't start speaking - just call stop directly
+        service.stop()
+
+        // Should only call stop, not pause (nothing to pause)
+        #expect(!mockSynthesizer.pauseCalled)
+        #expect(mockSynthesizer.stopCalled)
+        #expect(mockSynthesizer.callOrder == ["stop"])
+    }
+
+    @Test func synthesizerUsesApplicationAudioSession() {
+        // This test verifies that the synthesizer is configured to use the app's
+        // shared audio session, which prevents conflicts with SFSpeechRecognizer
+        let synthesizer = AVSpeechSynthesizer()
+        let service = TextToSpeechService(synthesizer: synthesizer)
+
+        // After initialization, synthesizer should use application audio session
+        // This is critical for turn-taking coordination with speech recognition
+        #expect(synthesizer.usesApplicationAudioSession == true)
+
+        // Suppress unused variable warning
+        _ = service
     }
 
     // MARK: - isSpeaking Property Tests

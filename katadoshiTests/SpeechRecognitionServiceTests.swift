@@ -241,6 +241,7 @@ struct SpeechRecognitionServiceTests {
     class MockAudioEngine: AVAudioEngine {
         var startCalled = false
         var stopCalled = false
+        var resetCalled = false
         var mockIsRunning = false
         var shouldThrowOnStart = false
         var startError: Error?
@@ -267,6 +268,10 @@ struct SpeechRecognitionServiceTests {
         override func stop() {
             stopCalled = true
             mockIsRunning = false
+        }
+
+        override func reset() {
+            resetCalled = true
         }
 
         override var isRunning: Bool {
@@ -486,6 +491,23 @@ struct SpeechRecognitionServiceTests {
 
         service.stopListening()
         #expect(!service.isListening)
+    }
+
+    /// Test stopListening resets the audio engine to clear lingering state
+    /// This is critical for turn-taking coordination with TTS
+    @Test func stopListeningResetsAudioEngine() {
+        let mockRecognizer = MockSpeechRecognizer()
+        let mockAudioEngine = MockAudioEngine()
+        let service = SpeechRecognitionService(
+            recognizer: mockRecognizer,
+            audioEngine: mockAudioEngine
+        )
+
+        // stopListening should reset the audio engine even when not actively listening
+        // This ensures a clean slate for the next startListening() call
+        service.stopListening()
+
+        #expect(mockAudioEngine.resetCalled)
     }
 
     // MARK: - didRecognizeCommand Callback Tests
