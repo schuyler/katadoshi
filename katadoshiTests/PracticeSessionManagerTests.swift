@@ -139,7 +139,8 @@ struct PracticeSessionManagerTests {
         let manager = PracticeSessionManager(
             form: form,
             ttsService: mockTTS,
-            speechService: mockSpeech
+            speechService: mockSpeech,
+            ttsToSpeechDelayNanoseconds: 0  // No delay in tests for synchronous transitions
         )
         return (manager, mockTTS, mockSpeech)
     }
@@ -1478,5 +1479,116 @@ struct PracticeSessionManagerTests {
         mockSpeech.simulateCommand(.back)
         #expect(manager.state == .completed)
         #expect(manager.currentMoveIndex == index)
+    }
+
+    // MARK: - startListeningForInitialCommand Tests (Regression: voice-controlled session start)
+
+    @Test func startListeningForInitialCommandStartsListeningInReadyState() throws {
+        let form = makeTestForm()
+        let (manager, _, mockSpeech) = makeTestManager(form: form)
+
+        #expect(manager.state == .ready)
+        #expect(!mockSpeech.mockIsListening)
+
+        manager.startListeningForInitialCommand()
+
+        #expect(mockSpeech.startListeningCalled)
+        #expect(mockSpeech.mockIsListening)
+    }
+
+    @Test func startListeningForInitialCommandStartsListeningInPausedState() throws {
+        let form = makeTestForm()
+        let (manager, mockTTS, mockSpeech) = makeTestManager(form: form)
+
+        // Get to Paused state
+        try manager.start()
+        mockTTS.simulateFinish()
+        mockSpeech.simulateCommand(.pause)
+        #expect(manager.state == .paused)
+        mockSpeech.reset()
+
+        manager.startListeningForInitialCommand()
+
+        #expect(mockSpeech.startListeningCalled)
+        #expect(mockSpeech.mockIsListening)
+    }
+
+    @Test func startListeningForInitialCommandStartsListeningInCompletedState() throws {
+        let form = makeTestForm(moves: ["Move 1"])
+        let (manager, mockTTS, mockSpeech) = makeTestManager(form: form)
+
+        // Get to Completed state
+        try manager.start()
+        mockTTS.simulateFinish()
+        mockSpeech.simulateCommand(.next)
+        #expect(manager.state == .completed)
+        mockSpeech.reset()
+
+        manager.startListeningForInitialCommand()
+
+        #expect(mockSpeech.startListeningCalled)
+        #expect(mockSpeech.mockIsListening)
+    }
+
+    @Test func startListeningForInitialCommandIgnoredInSpeakingState() throws {
+        let form = makeTestForm()
+        let (manager, _, mockSpeech) = makeTestManager(form: form)
+
+        try manager.start()
+        #expect(manager.state == .speaking)
+        mockSpeech.reset()
+
+        manager.startListeningForInitialCommand()
+
+        #expect(!mockSpeech.startListeningCalled)
+        #expect(!mockSpeech.mockIsListening)
+    }
+
+    @Test func startListeningForInitialCommandIgnoredInListeningState() throws {
+        let form = makeTestForm()
+        let (manager, mockTTS, mockSpeech) = makeTestManager(form: form)
+
+        try manager.start()
+        mockTTS.simulateFinish()
+        #expect(manager.state == .listening)
+        let initialCallCount = mockSpeech.startListeningCallCount
+
+        manager.startListeningForInitialCommand()
+
+        // Should not start listening again (already listening)
+        #expect(mockSpeech.startListeningCallCount == initialCallCount)
+    }
+
+    @Test func startListeningForInitialCommandDoesNotRestartIfAlreadyListening() throws {
+        let form = makeTestForm()
+        let (manager, _, mockSpeech) = makeTestManager(form: form)
+
+        #expect(manager.state == .ready)
+
+        // Start listening once
+        manager.startListeningForInitialCommand()
+        #expect(mockSpeech.startListeningCallCount == 1)
+
+        // Try to start again while already listening
+        manager.startListeningForInitialCommand()
+        #expect(mockSpeech.startListeningCallCount == 1) // Still 1, not 2
+    }
+
+    @Test func voiceStartCommandWorksAfterCallingStartListeningForInitialCommand() throws {
+        let form = makeTestForm()
+        let (manager, mockTTS, mockSpeech) = makeTestManager(form: form)
+
+        #expect(manager.state == .ready)
+
+        // Start listening for initial command
+        manager.startListeningForInitialCommand()
+        #expect(mockSpeech.mockIsListening)
+
+        // Simulate voice "start" command
+        mockSpeech.simulateCommand(.start)
+
+        // Should transition to speaking state
+        #expect(manager.state == .speaking)
+        #expect(mockTTS.speakCalled)
     }
 }

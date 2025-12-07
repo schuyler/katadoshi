@@ -99,6 +99,8 @@ class SpeechRecognitionService: NSObject, SpeechRecognitionServiceProtocol {
     private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
     private var recognitionTask: SFSpeechRecognitionTask?
     private var _isListening = false
+    private var isRestarting = false  // Prevents multiple restart attempts
+    private var bufferCount = 0  // Diagnostic: count audio buffers received
 
     /// Indicates whether the service is currently listening
     var isListening: Bool {
@@ -150,6 +152,9 @@ class SpeechRecognitionService: NSObject, SpeechRecognitionServiceProtocol {
             stopListening()
         }
 
+        // Audio session is configured once by PracticeViewModel
+        // Do NOT reconfigure here - see: https://stackoverflow.com/questions/53147291
+
         // Set up recognition request
         recognitionRequest = SFSpeechAudioBufferRecognitionRequest()
         guard let recognitionRequest = recognitionRequest else {
@@ -158,12 +163,27 @@ class SpeechRecognitionService: NSObject, SpeechRecognitionServiceProtocol {
         }
 
         recognitionRequest.shouldReportPartialResults = true
+        recognitionRequest.taskHint = .confirmation  // Short commands like "next", "stop"
+        if #available(iOS 13, *) {
+            recognitionRequest.requiresOnDeviceRecognition = false  // Allow cloud for reliability
+        }
 
         // Start audio engine
         let inputNode = audioEngine.inputNode
         let recordingFormat = inputNode.outputFormat(forBus: 0)
 
+        print("🎤 KATADOSHI: Audio format - rate: \(recordingFormat.sampleRate), channels: \(recordingFormat.channelCount)")
+
+        // Check for valid recording format
+        guard recordingFormat.sampleRate > 0 else {
+            print("🎤 KATADOSHI: Invalid audio format (sampleRate=0)")
+            onRecognitionUnavailable?()
+            return
+        }
+
+        bufferCount = 0
         inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { [weak self] buffer, _ in
+            self?.bufferCount += 1
             self?.recognitionRequest?.append(buffer)
         }
 
@@ -180,7 +200,31 @@ class SpeechRecognitionService: NSObject, SpeechRecognitionServiceProtocol {
         recognitionTask = recognizer.recognitionTask(with: recognitionRequest) { [weak self] result, error in
             guard let self = self else { return }
 
-            if let error = error {
+            if let error = error as NSError? {
+                // Error 1110 = "No speech detected" - restart listening
+                // Error 216 = "Request was canceled" - intentional, ignore
+                // Error 1101 = iOS 18 local speech recording issue - ignore (console noise)
+                if error.code == 1110 {
+                    Task { @MainActor in
+                        // Prevent multiple restart attempts (must check on MainActor)
+                        guard !self.isRestarting else { return }
+                        self.isRestarting = true
+
+                        print("🎤 KATADOSHI: No speech (1110) after \(self.bufferCount) buffers, restarting in 2s...")
+                        self.stopListening()
+                        try? await Task.sleep(nanoseconds: 2_000_000_000)  // 2 seconds
+                        self.isRestarting = false
+                        self.startListening()
+                    }
+                    return
+                }
+
+                if error.code == 216 || error.code == 1101 {
+                    // 216 = canceled, 1101 = iOS 18 local speech issue (ignore both)
+                    return
+                }
+
+                print("🎤 KATADOSHI: Recognition error \(error.code): \(error.localizedDescription)")
                 Task { @MainActor in
                     self.onRecognitionUnavailable?()
                 }
@@ -191,9 +235,11 @@ class SpeechRecognitionService: NSObject, SpeechRecognitionServiceProtocol {
 
             // Parse the transcript for commands
             let transcript = result.bestTranscription.formattedString
+            print("🎤 KATADOSHI: Transcript: '\(transcript)' (final: \(result.isFinal))")
 
             Task { @MainActor in
                 if let command = parseCommand(from: transcript) {
+                    print("🎤 KATADOSHI: Command recognized: \(command)")
                     self.didRecognizeCommand?(command)
                 }
             }
@@ -208,15 +254,17 @@ class SpeechRecognitionService: NSObject, SpeechRecognitionServiceProtocol {
         recognitionTask?.cancel()
         recognitionTask = nil
 
-        // Stop and clean up audio engine
-        if audioEngine.isRunning {
-            audioEngine.stop()
-            audioEngine.inputNode.removeTap(onBus: 0)
-        }
+        // Always stop engine and remove tap
+        audioEngine.stop()
+        audioEngine.inputNode.removeTap(onBus: 0)
 
         // Clean up recognition request
         recognitionRequest?.endAudio()
         recognitionRequest = nil
+
+        // Do NOT deactivate audio session - it's configured once by PracticeViewModel
+        // Deactivating/reactivating causes iOS 18 audio session conflicts
+        // See: https://stackoverflow.com/questions/53147291
 
         _isListening = false
     }

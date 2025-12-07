@@ -35,42 +35,44 @@ struct FormEditorView: View {
 
     // MARK: - Body
     var body: some View {
-        SwiftUI.Form {
-            Section {
-                TextField("Form Name", text: $title)
-                    .accessibilityLabel("Form Title")
-
-                ZStack(alignment: .topLeading) {
-                    if movesText.isEmpty {
-                        Text("Enter moves, one per line")
-                            .foregroundColor(.secondary)
-                            .padding(.horizontal, 4)
-                            .padding(.vertical, 8)
-                            .allowsHitTesting(false)
-                    }
-                    TextEditor(text: $movesText)
-                        .font(.system(.body, design: .monospaced))
-                        .opacity(movesText.isEmpty ? 0.5 : 1.0)
-                }
-                .frame(minHeight: 120)
-                .accessibilityLabel("Form Moves")
-            } header: {
-                Text("Form Details")
-            } footer: {
-                Text("Enter moves one per line. Maximum 200 characters per move.")
-                    .font(.caption)
-            }
-
-            if isEditMode {
+        GeometryReader { geometry in
+            SwiftUI.Form {
                 Section {
-                    Button(role: .destructive) {
-                        showingDeleteConfirmation = true
-                    } label: {
-                        Text("Delete Form")
-                            .frame(maxWidth: .infinity)
+                    TextField("Form Name", text: $title)
+                        .accessibilityLabel("Form Title")
+
+                    ZStack(alignment: .topLeading) {
+                        if movesText.isEmpty {
+                            Text("Enter moves, one per line")
+                                .foregroundColor(.secondary)
+                                .padding(.horizontal, 4)
+                                .padding(.vertical, 8)
+                                .allowsHitTesting(false)
+                        }
+                        TextEditor(text: $movesText)
+                            .font(.system(.body, design: .monospaced))
+                            .opacity(movesText.isEmpty ? 0.5 : 1.0)
                     }
-                    .buttonStyle(.bordered)
-                    .accessibilityLabel("Delete Form")
+                    .frame(minHeight: 120, maxHeight: geometry.size.height * 0.6)
+                    .accessibilityLabel("Form Moves")
+                } header: {
+                    Text("Form Details")
+                } footer: {
+                    Text("Enter moves one per line. Maximum 200 characters per move.")
+                        .font(.caption)
+                }
+
+                if isEditMode {
+                    Section {
+                        Button(role: .destructive) {
+                            showingDeleteConfirmation = true
+                        } label: {
+                            Text("Delete Form")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.bordered)
+                        .accessibilityLabel("Delete Form")
+                    }
                 }
             }
         }

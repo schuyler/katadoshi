@@ -60,6 +60,7 @@ struct PracticeViewModelTests {
         var stopCalled = false
         var handleCommandCalled = false
         var pauseCalled = false
+        var startListeningForInitialCommandCalled = false
         var lastCommand: VoiceCommand?
         var shouldThrowOnStart: PracticeSessionManagerError?
 
@@ -85,6 +86,10 @@ struct PracticeViewModelTests {
 
         func pause() {
             pauseCalled = true
+        }
+
+        func startListeningForInitialCommand() {
+            startListeningForInitialCommandCalled = true
         }
 
         // Test helper methods to simulate manager behavior
@@ -115,6 +120,7 @@ struct PracticeViewModelTests {
             stopCalled = false
             handleCommandCalled = false
             pauseCalled = false
+            startListeningForInitialCommandCalled = false
             lastCommand = nil
             shouldThrowOnStart = nil
         }

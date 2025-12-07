@@ -66,6 +66,10 @@ protocol PracticeSessionManagerProtocol {
 
     /// Pauses the practice session
     func pause()
+
+    /// Starts listening for initial voice command in Ready/Paused/Completed states
+    /// Call this after permissions are granted to enable voice-controlled session start
+    func startListeningForInitialCommand()
 }
 
 // Note: The protocols TextToSpeechServiceProtocol and SpeechRecognitionServiceProtocol
@@ -112,6 +116,7 @@ class PracticeSessionManager: PracticeSessionManagerProtocol {
 
     private var timeoutTimer: Timer?
     private let timeoutInterval: TimeInterval = 120  // 2 minutes
+    private let ttsToSpeechDelayNanoseconds: UInt64
 
     // MARK: - Initialization
 
@@ -120,10 +125,15 @@ class PracticeSessionManager: PracticeSessionManagerProtocol {
     ///   - form: The form to practice
     ///   - ttsService: Text-to-speech service for move instructions
     ///   - speechService: Speech recognition service for voice commands
-    init(form: Form, ttsService: TextToSpeechServiceProtocol, speechService: SpeechRecognitionServiceProtocol) {
+    ///   - ttsToSpeechDelayNanoseconds: Delay after TTS finishes before starting speech recognition (default 500ms)
+    init(form: Form,
+         ttsService: TextToSpeechServiceProtocol,
+         speechService: SpeechRecognitionServiceProtocol,
+         ttsToSpeechDelayNanoseconds: UInt64 = 500_000_000) {
         self.currentForm = form
         self.ttsService = ttsService
         self.speechService = speechService
+        self.ttsToSpeechDelayNanoseconds = ttsToSpeechDelayNanoseconds
         setupServiceCallbacks()
     }
 
@@ -249,6 +259,24 @@ class PracticeSessionManager: PracticeSessionManagerProtocol {
         transitionTo(.paused)
     }
 
+    /// Starts listening for initial voice command in Ready/Paused/Completed states
+    ///
+    /// This enables voice-controlled session start by listening for "start" or "begin"
+    /// commands before the session has started. Should be called after permissions are granted.
+    func startListeningForInitialCommand() {
+        // Only start listening in states that accept start/begin commands
+        guard [.ready, .paused, .completed].contains(state) else {
+            return
+        }
+
+        // Don't restart if already listening
+        guard !speechService.isListening else {
+            return
+        }
+
+        speechService.startListening()
+    }
+
     // MARK: - Internal Methods (for testing)
 
     /// Handles 2-minute timeout during listening state
@@ -265,10 +293,22 @@ class PracticeSessionManager: PracticeSessionManagerProtocol {
 
     /// Sets up service callbacks for coordination
     private func setupServiceCallbacks() {
-        // TTS completion triggers listening
+        let delayNanos = ttsToSpeechDelayNanoseconds
+        // TTS completion triggers listening (after audio hardware settles)
         ttsService.didFinishSpeaking = { [weak self] _ in
             guard let self = self, self.state == .speaking else { return }
-            self.startListening()
+            if delayNanos > 0 {
+                Task { @MainActor in
+                    // Allow audio hardware to fully release from TTS before starting recognition
+                    // See: https://stackoverflow.com/questions/43457132
+                    try? await Task.sleep(nanoseconds: delayNanos)
+                    guard self.state == .speaking else { return }  // Re-check after delay
+                    self.startListening()
+                }
+            } else {
+                // No delay (used in tests)
+                self.startListening()
+            }
         }
 
         // Command recognition triggers TTS stop and processes command

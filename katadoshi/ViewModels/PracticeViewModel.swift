@@ -227,10 +227,29 @@ class PracticeViewModel {
         AVAudioSession.sharedInstance().requestRecordPermission { [weak self] granted in
             Task { @MainActor in
                 guard let self = self else { return }
-                if !granted {
+                if granted {
+                    // Configure audio session ONCE for the entire practice session
+                    // This must be done once, not repeatedly - see:
+                    // https://stackoverflow.com/questions/53147291
+                    self.configureAudioSession()
+                    // Both permissions granted - start listening for initial voice command
+                    self.sessionManager.startListeningForInitialCommand()
+                } else {
                     self.error = .permissionDenied
                 }
             }
+        }
+    }
+
+    /// Configure audio session once for TTS and speech recognition
+    private func configureAudioSession() {
+        let audioSession = AVAudioSession.sharedInstance()
+        do {
+            try audioSession.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker, .allowBluetooth])
+            try audioSession.setActive(true)
+        } catch {
+            // Non-fatal - services may still work
+            print("[AudioSession] Configuration failed: \(error)")
         }
     }
 }
