@@ -118,6 +118,10 @@ class PracticeSessionManager: PracticeSessionManagerProtocol {
     private let timeoutInterval: TimeInterval = 120  // 2 minutes
     private let ttsToSpeechDelayNanoseconds: UInt64
 
+    /// State to transition to after current TTS announcement finishes
+    /// Used for completion ("Joombi"), pause ("Paused"), timeout ("Still there?")
+    private var stateAfterSpeaking: SessionState?
+
     // MARK: - Initialization
 
     /// Creates a new PracticeSessionManager
@@ -211,7 +215,8 @@ class PracticeSessionManager: PracticeSessionManagerProtocol {
             case .repeat:
                 repeatCurrent()
             case .pause:
-                transitionTo(.paused)
+                // Announce pause so user knows it worked (they're not looking at screen)
+                speakAnnouncement("Paused", thenTransitionTo: .paused)
             case .start, .begin:
                 speakCurrentMove()
             case .stop:
@@ -254,9 +259,8 @@ class PracticeSessionManager: PracticeSessionManagerProtocol {
             return
         }
 
-        speechService.stopListening()
-        resetTimeoutTimer()
-        transitionTo(.paused)
+        // Announce pause so user knows it worked (they're not looking at screen)
+        speakAnnouncement("Paused", thenTransitionTo: .paused)
     }
 
     /// Starts listening for initial voice command in Ready/Paused/Completed states
@@ -285,8 +289,11 @@ class PracticeSessionManager: PracticeSessionManagerProtocol {
             return
         }
 
+        // Speak audio prompt since user isn't looking at screen
+        // After speaking, return to listening state
+        speakAnnouncement("Still there?", thenTransitionTo: .listening)
+
         onTimeout?()
-        // State remains .listening after timeout
     }
 
     // MARK: - Private Methods
@@ -294,19 +301,32 @@ class PracticeSessionManager: PracticeSessionManagerProtocol {
     /// Sets up service callbacks for coordination
     private func setupServiceCallbacks() {
         let delayNanos = ttsToSpeechDelayNanoseconds
-        // TTS completion triggers listening (after audio hardware settles)
+        // TTS completion triggers state transition and listening
         ttsService.didFinishSpeaking = { [weak self] _ in
             guard let self = self, self.state == .speaking else { return }
+
+            // Check if we have a pending state transition (completion, pause, timeout)
+            let targetState = self.stateAfterSpeaking
+            self.stateAfterSpeaking = nil
+
             if delayNanos > 0 {
                 Task { @MainActor in
                     // Allow audio hardware to fully release from TTS before starting recognition
                     // See: https://stackoverflow.com/questions/43457132
                     try? await Task.sleep(nanoseconds: delayNanos)
                     guard self.state == .speaking else { return }  // Re-check after delay
+
+                    // Transition to target state if specified, then start listening
+                    if let targetState = targetState {
+                        self.transitionTo(targetState)
+                    }
                     self.startListening()
                 }
             } else {
                 // No delay (used in tests)
+                if let targetState = targetState {
+                    self.transitionTo(targetState)
+                }
                 self.startListening()
             }
         }
@@ -347,8 +367,20 @@ class PracticeSessionManager: PracticeSessionManagerProtocol {
         speechService.stopListening()
         resetTimeoutTimer()
 
+        stateAfterSpeaking = nil  // Normal flow: speaking -> listening
         transitionTo(.speaking)
         ttsService.speak(text: currentMove)
+    }
+
+    /// Speaks an announcement and transitions to the specified state after TTS completes
+    /// Used for audio feedback that users can hear without looking at the screen
+    private func speakAnnouncement(_ text: String, thenTransitionTo targetState: SessionState) {
+        speechService.stopListening()
+        resetTimeoutTimer()
+
+        stateAfterSpeaking = targetState
+        transitionTo(.speaking)
+        ttsService.speak(text: text)
     }
 
     /// Starts listening for voice commands
@@ -391,7 +423,9 @@ class PracticeSessionManager: PracticeSessionManagerProtocol {
         // Check if we've reached the end
         if currentMoveIndex >= currentForm.moves.count {
             currentMoveIndex = currentForm.moves.count - 1
-            transitionTo(.completed)
+            // Announce completion with "Joombi" (ready position) so user knows they're done
+            // User isn't looking at screen during practice, needs audio feedback
+            speakAnnouncement("Joombi", thenTransitionTo: .completed)
             return
         }
 
