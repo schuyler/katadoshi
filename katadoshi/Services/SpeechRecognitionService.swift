@@ -226,9 +226,17 @@ class SpeechRecognitionService: NSObject, SpeechRecognitionServiceProtocol {
                     return
                 }
 
-                print("🎤 KATADOSHI: Recognition error \(error.code): \(error.localizedDescription)")
+                // For other errors, log and silently retry instead of showing a popup
+                // (user isn't looking at the phone during voice-driven practice)
+                print("🎤 KATADOSHI: Recognition error \(error.code): \(error.localizedDescription), retrying...")
                 Task { @MainActor in
-                    self.onRecognitionUnavailable?()
+                    guard self._isListening else { return }
+                    guard !self.isRestarting else { return }
+                    self.isRestarting = true
+                    self.stopListening()
+                    try? await Task.sleep(nanoseconds: 200_000_000)  // 200ms
+                    self.isRestarting = false
+                    self.startListening()
                 }
                 return
             }
