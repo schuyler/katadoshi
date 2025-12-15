@@ -210,9 +210,9 @@ class SpeechRecognitionService: NSObject, SpeechRecognitionServiceProtocol {
                         guard !self.isRestarting else { return }
                         self.isRestarting = true
 
-                        print("🎤 KATADOSHI: No speech (1110) after \(self.bufferCount) buffers, restarting in 2s...")
+                        print("🎤 KATADOSHI: No speech (1110) after \(self.bufferCount) buffers, restarting in 200ms...")
                         self.stopListening()
-                        try? await Task.sleep(nanoseconds: 2_000_000_000)  // 2 seconds
+                        try? await Task.sleep(nanoseconds: 200_000_000)  // 200ms
                         self.isRestarting = false
                         self.startListening()
                     }
