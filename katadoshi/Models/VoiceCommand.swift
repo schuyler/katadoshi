@@ -8,10 +8,11 @@
 import Foundation
 
 /// Voice commands recognized by speech recognition service
-/// PRD Section 5.3 specifies 8 command variants
+/// PRD Section 5.3 specifies 8 command variants, plus "restart" for going back to move 1
 public enum VoiceCommand: Equatable, Hashable {
     case start
     case begin
+    case restart  // Go back to move 1 from any state
     case next
     case go
     case back
@@ -29,8 +30,11 @@ public func parseCommand(from transcript: String) -> VoiceCommand? {
 
     // Match commands in priority order
     // Order matters - first match wins
+    // Note: Check "restart" before "start" since "restart" contains "start"
     // Note: Check "back" before "go" to handle "go back" phrase correctly
-    if lowercased.contains("start") {
+    if lowercased.contains("restart") {
+        return .restart
+    } else if lowercased.contains("start") {
         return .start
     } else if lowercased.contains("begin") {
         return .begin

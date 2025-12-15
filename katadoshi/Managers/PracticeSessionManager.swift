@@ -219,6 +219,8 @@ class PracticeSessionManager: PracticeSessionManagerProtocol {
                 speakAnnouncement("Paused", thenTransitionTo: .paused)
             case .start, .begin:
                 speakCurrentMove()
+            case .restart:
+                restartFromBeginning()
             case .stop:
                 stop()
             }
@@ -229,6 +231,8 @@ class PracticeSessionManager: PracticeSessionManagerProtocol {
             switch command {
             case .start, .begin:
                 speakCurrentMove()
+            case .restart:
+                restartFromBeginning()
             default:
                 break
             }
@@ -237,10 +241,8 @@ class PracticeSessionManager: PracticeSessionManagerProtocol {
             // Handle restart with start/begin from completed state
             speechService.stopListening()
             switch command {
-            case .start, .begin:
-                currentMoveIndex = 0
-                notifyMoveChanged()
-                speakCurrentMove()
+            case .start, .begin, .restart:
+                restartFromBeginning()
             default:
                 break
             }
@@ -408,11 +410,11 @@ class PracticeSessionManager: PracticeSessionManagerProtocol {
         case .speaking:
             return command == .stop
         case .listening:
-            return [.next, .go, .back, .repeat, .pause, .stop, .start, .begin].contains(command)
+            return [.next, .go, .back, .repeat, .pause, .stop, .start, .begin, .restart].contains(command)
         case .paused:
-            return [.start, .begin, .stop].contains(command)
+            return [.start, .begin, .restart, .stop].contains(command)
         case .completed:
-            return [.start, .begin, .stop].contains(command)
+            return [.start, .begin, .restart, .stop].contains(command)
         }
     }
 
@@ -440,6 +442,13 @@ class PracticeSessionManager: PracticeSessionManagerProtocol {
             currentMoveIndex -= 1
         }
 
+        notifyMoveChanged()
+        speakCurrentMove()
+    }
+
+    /// Restarts from the beginning (move 1)
+    private func restartFromBeginning() {
+        currentMoveIndex = 0
         notifyMoveChanged()
         speakCurrentMove()
     }
