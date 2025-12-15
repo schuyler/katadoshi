@@ -201,12 +201,19 @@ class SpeechRecognitionService: NSObject, SpeechRecognitionServiceProtocol {
             guard let self = self else { return }
 
             if let error = error as NSError? {
-                // Error 1110 = "No speech detected" - restart listening
-                // Error 216 = "Request was canceled" - intentional, ignore
+                // Error 216 = "Request was canceled" - intentional stop, ignore
+                // Error 301 = "Recognition request was canceled" - intentional stop, ignore
                 // Error 1101 = iOS 18 local speech recording issue - ignore (console noise)
+                if error.code == 216 || error.code == 301 || error.code == 1101 {
+                    return
+                }
+
+                // Error 1110 = "No speech detected" - restart listening if still active
                 if error.code == 1110 {
                     Task { @MainActor in
-                        // Prevent multiple restart attempts (must check on MainActor)
+                        // Only restart if we're still supposed to be listening
+                        // (command recognition or state change may have stopped us)
+                        guard self._isListening else { return }
                         guard !self.isRestarting else { return }
                         self.isRestarting = true
 
@@ -216,11 +223,6 @@ class SpeechRecognitionService: NSObject, SpeechRecognitionServiceProtocol {
                         self.isRestarting = false
                         self.startListening()
                     }
-                    return
-                }
-
-                if error.code == 216 || error.code == 1101 {
-                    // 216 = canceled, 1101 = iOS 18 local speech issue (ignore both)
                     return
                 }
 
